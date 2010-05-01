@@ -1,15 +1,15 @@
 class Node:
-    def __init__(self, location=(0,0,0), objects=[], inhabitant=None):
+    def __init__(self, location=(0,0,0), contents=None):
         self.location = location
-        self.objects = objects
-        self.inhabitant = inhabitant
+        self.contents = contents
 
-    def add_object(self, object):
-        self.objects.append(object)
+    def __str__(self):
+        return "%s - %s" % (self.location, self.contents )
 
-    def set_inhabitant(self, inhabitant):
-        if self.inhabitant is None:
-            self.inhabitant = inhabitant
-            return True
-        else:
-            return False
+    def __eq__(self, other):
+        same_location = self.location == other.location
+        same_contents = self.contents == other.contents
+        return same_location and same_contents
+
+    def __hash__(self):
+        return hash(self.location)
