@@ -7,6 +7,8 @@ class Node:
         return "%s - %s" % (self.location, self.contents )
 
     def __eq__(self, other):
+        if other == None:
+            return False
         same_location = self.location == other.location
         same_contents = self.contents == other.contents
         return same_location and same_contents
