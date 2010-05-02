@@ -2,16 +2,20 @@ import sys
 import string, random
 import pygame
 
+
 from grid import Grid
 from terrain import TerrainData, MeteorTerrainGenerator
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
+X_GRID = 320 
+Y_GRID = 240
 SCREEN_RESOLUTION = (SCREEN_WIDTH, SCREEN_HEIGHT)
 DEFAULT_ZOOM = 10 # zoom by changing block size!
+FONT_SIZE = 14
 ZOOM_INCREMENT = 5
-X_SCROLL = 3
-Y_SCROLL = 3
+X_SCROLL = 1 
+Y_SCROLL = 1
 
 # intiialize and blank the screen
 pygame.init()
@@ -25,11 +29,13 @@ zoom = DEFAULT_ZOOM
 columns = SCREEN_WIDTH / zoom
 rows = SCREEN_HEIGHT / zoom
 
+
+
 # create the grid, fill it with nodes
 # this is currently a bit slow...
 gameGrid = Grid()
-for x in range(-160,160):
-    for y in range(-120,120):
+for x in range(0, X_GRID):
+    for y in range(0 ,Y_GRID):
         terrain = TerrainData()
         gameGrid.add_node((x, y, 0), terrain)
 
@@ -39,7 +45,7 @@ generator = MeteorTerrainGenerator()
 generator.apply(gameGrid)
 
 font_file = pygame.font.match_font('freemono')
-font = pygame.font.Font(font_file, 14)
+font = pygame.font.Font(font_file, FONT_SIZE)
 font.set_bold(True)
 
 # updates the screen to show the appropriate visible nodes
@@ -51,12 +57,12 @@ def updateDisplay():
             if terrainNode != None:
                 rectx, recty, rectz = terrainNode.location
                 newrectx = (rectx - viewportX) * zoom
-                newrecty = recty * zoom
+                newrecty = (recty - viewportY) * zoom
                 rect = pygame.Rect(newrectx, newrecty, zoom, zoom)
                 terrainNode.contents.render(rect, screen)
 
     # show current x, y, z in top left corner
-    current_view = (viewportX, viewportY, viewportZ)
+    current_view = (viewportX, viewportY, viewportZ, zoom, columns, rows)
     text = font.render(str(current_view), 1, (0, 255, 0))
     rect = text.get_rect()
     rect.x, rect.y = (0,0)
@@ -72,11 +78,13 @@ while True:
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_DOWN:
-                viewportY -= Y_SCROLL
-            if event.key == pygame.K_UP:
                 viewportY += Y_SCROLL
+            if event.key == pygame.K_UP:
+                if(viewportY > 0):
+                    viewportY -= Y_SCROLL
             if event.key == pygame.K_LEFT:
-                viewportX -= X_SCROLL
+                if(viewportX > 0):
+                    viewportX -= X_SCROLL
             if event.key == pygame.K_RIGHT:
                 viewportX += X_SCROLL
             if event.key == pygame.K_PAGEUP:
@@ -84,9 +92,10 @@ while True:
             if event.key == pygame.K_PAGEDOWN:
                 viewportZ -= 1
             if event.key == pygame.K_z:
-                zoom += ZOOM_INCREMENT
-                columns = SCREEN_WIDTH / zoom
-                rows = SCREEN_HEIGHT / zoom
+                if(zoom + ZOOM_INCREMENT) < 25:
+                    zoom += ZOOM_INCREMENT
+                    columns = SCREEN_WIDTH / zoom
+                    rows = SCREEN_HEIGHT / zoom
             if event.key == pygame.K_x:
                 if (zoom - ZOOM_INCREMENT) > 0:
                     zoom -= ZOOM_INCREMENT
