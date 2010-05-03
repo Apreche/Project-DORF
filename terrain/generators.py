@@ -1,8 +1,8 @@
 import random, math 
 
 class TerrainGenerator:
-	def apply(self, grid):
-		pass
+    def apply(self, grid):
+        pass
 
 class MeteorTerrainGenerator(TerrainGenerator):
     def __init__(self, strikes=25, strikeMinRadius=20, strikeMaxRadius=100):
@@ -47,3 +47,30 @@ class MeteorTerrainGenerator(TerrainGenerator):
                     change *= (1 - (sqrDistance / sqrStrikeRadius))
                     change *= strikeRadius * 3
                     terrainData.height += change
+
+class Smoother(TerrainGenerator):
+    def __init__(self, smoothness=0.25):
+        self.smoothness = smoothness
+
+    def apply(self, grid):
+        for node in grid.nodes():
+            nodeX, nodeY, nodeZ = node.location
+            neighbors = []
+            neighbors.append(grid.get_node_at((nodeX+1, nodeY, nodeZ)))
+            neighbors.append(grid.get_node_at((nodeX-1, nodeY, nodeZ)))
+            neighbors.append(grid.get_node_at((nodeX, nodeY+1, nodeZ)))
+            neighbors.append(grid.get_node_at((nodeX, nodeY-1, nodeZ)))
+            neighbors.append(grid.get_node_at((nodeX, nodeY, nodeZ+1)))
+            neighbors.append(grid.get_node_at((nodeX, nodeY, nodeZ-1)))
+
+            original = node.contents.height
+            avg = original
+            total = 1
+            for neighbor in neighbors:
+                if neighbor is not None:
+                    avg += neighbor.contents.height
+                    total += 1
+
+            avg /= total
+
+            node.contents.height = avg*self.smoothness + node.contents.height*(1-self.smoothness)

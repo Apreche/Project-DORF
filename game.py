@@ -5,7 +5,7 @@ import pygame
 
 from grid import Grid
 from terrain import TerrainData 
-from terrain.generators import MeteorTerrainGenerator
+from terrain.generators import MeteorTerrainGenerator, Smoother
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -42,7 +42,9 @@ for x in range(0, X_GRID):
 #gameGrid.connect_grid()
 
 generator = MeteorTerrainGenerator()
+smoother = Smoother(0.5)
 generator.apply(gameGrid)
+smoother.apply(gameGrid)
 
 font_file = pygame.font.match_font('freemono')
 font = pygame.font.Font(font_file, FONT_SIZE)
