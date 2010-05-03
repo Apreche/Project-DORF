@@ -51,5 +51,5 @@ class Grid(graph):
 
             for edge in edges:
                 if edge is not None:
-                    if not self.has_edge(node, edge):
+                    if not self.has_edge((node, edge)):
                         self.add_edge((node, edge))

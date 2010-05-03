@@ -44,7 +44,7 @@ class MeteorTerrainGenerator(TerrainGenerator):
             sqrStrikeRadius = strikeRadius * strikeRadius
 
             if strikeNode is None:
-                print "Out-of-range meteor strike at ", 
+                print "Out-of-range meteor strike at ",
                 print strikeLocation
 
             for node in grid.nodes():
