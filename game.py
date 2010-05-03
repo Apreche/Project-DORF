@@ -4,7 +4,8 @@ import pygame
 
 
 from grid import Grid
-from terrain import TerrainData, MeteorTerrainGenerator
+from terrain import TerrainData 
+from terrain.generators import MeteorTerrainGenerator
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
