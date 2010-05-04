@@ -22,16 +22,18 @@ pygame.init()
 screen = pygame.display.set_mode(SCREEN_RESOLUTION)
 pygame.display.set_caption('Project D.O.R.F.')
 view = ViewPort((0, 0, 0), SCREEN_RESOLUTION, GRID_SIZE)
-
 # create the grid, fill it with nodes
 # this is currently a bit slow...
 gameGrid = Grid()
-
 for x in range(0, X_GRID):
     for y in range(0 ,Y_GRID):
         terrain = TerrainData()
         gameGrid.add_node((x, y, 0), terrain)
 
+#gameGrid.connect_grid()
+
+generator = MeteorTerrainGenerator()
+generator.apply(gameGrid)
 gameGrid.connect_grid()
 
 generator = MeteorTerrainGenerator()
@@ -89,7 +91,6 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
-
         if event.type == pygame.MOUSEBUTTONDOWN:
             loc = view.screen2grid(event.pos)
             if event.button == 1: # Add mover
@@ -102,7 +103,6 @@ while True:
                         break
 
             updateDisplay()
-
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_DOWN:
                 view.scroll((0, 1))
