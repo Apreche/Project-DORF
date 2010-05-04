@@ -48,7 +48,6 @@ generator = MeteorTerrainGenerator()
 smoother = Smoother(0.5)
 generator.apply(gameGrid)
 smoother.apply(gameGrid)
->>>>>>> upstream/master:game.py
 
 font_file = pygame.font.match_font('freemono')
 font = pygame.font.Font(font_file, FONT_SIZE)
