@@ -5,7 +5,7 @@ import pygame
 
 from grid import Grid
 from terrain import TerrainData 
-from terrain.generators import MeteorTerrainGenerator, Smoother
+from terrain.generators import MeteorTerrainGenerator, Smoother, PlasmaFractalGenerator
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -14,7 +14,7 @@ Y_GRID = 240
 SCREEN_RESOLUTION = (SCREEN_WIDTH, SCREEN_HEIGHT)
 DEFAULT_ZOOM = 10 # zoom by changing block size!
 FONT_SIZE = 14
-ZOOM_INCREMENT = 5
+ZOOM_INCREMENT = 2
 X_SCROLL = 1 
 Y_SCROLL = 1
 
@@ -41,10 +41,10 @@ for x in range(0, X_GRID):
 
 #gameGrid.connect_grid()
 
-generator = MeteorTerrainGenerator()
+generator = PlasmaFractalGenerator(250)
 smoother = Smoother(0.5)
 generator.apply(gameGrid)
-smoother.apply(gameGrid)
+#smoother.apply(gameGrid)
 
 font_file = pygame.font.match_font('freemono')
 font = pygame.font.Font(font_file, FONT_SIZE)
