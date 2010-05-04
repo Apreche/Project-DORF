@@ -1,27 +1,6 @@
-import random, pygame, math
+import random, math 
 
-class TerrainData():
-    def __init__(self):
-        self.height = 0 # in meters, arbitrarily
-        self.moisture = 0 # 0..1 implies humid land, 1+ equals meters of water coverage
-        self.temperature = 0 # 0..1
-
-    def randomize(self):
-        self.height = (random.random() - 0.5)*1000
-        self.moisture = random.random()
-        self.temperature = random.random()
-
-    def render(self, rect, surface):
-        heightValue = ((self.height / 1000.0)+0.5) * 255
-        if heightValue > 255:
-            heightValue = 255
-        if heightValue < 0:
-            heightValue = 0
-        color = (heightValue, heightValue, heightValue)
-        surface.fill(color, rect)
-
-
-class TerrainGenerator():
+class TerrainGenerator:
     def apply(self, grid):
         pass
 
@@ -68,3 +47,30 @@ class MeteorTerrainGenerator(TerrainGenerator):
                     change *= (1 - (sqrDistance / sqrStrikeRadius))
                     change *= strikeRadius * 3
                     terrainData.height += change
+
+class Smoother(TerrainGenerator):
+    def __init__(self, smoothness=0.25):
+        self.smoothness = smoothness
+
+    def apply(self, grid):
+        for node in grid.nodes():
+            nodeX, nodeY, nodeZ = node.location
+            neighbors = []
+            neighbors.append(grid.get_node_at((nodeX+1, nodeY, nodeZ)))
+            neighbors.append(grid.get_node_at((nodeX-1, nodeY, nodeZ)))
+            neighbors.append(grid.get_node_at((nodeX, nodeY+1, nodeZ)))
+            neighbors.append(grid.get_node_at((nodeX, nodeY-1, nodeZ)))
+            neighbors.append(grid.get_node_at((nodeX, nodeY, nodeZ+1)))
+            neighbors.append(grid.get_node_at((nodeX, nodeY, nodeZ-1)))
+
+            original = node.contents.height
+            avg = original
+            total = 1
+            for neighbor in neighbors:
+                if neighbor is not None:
+                    avg += neighbor.contents.height
+                    total += 1
+
+            avg /= total
+
+            node.contents.height = avg*self.smoothness + node.contents.height*(1-self.smoothness)
