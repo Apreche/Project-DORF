@@ -1,3 +1,19 @@
 Welcome to Project D.O.R.F. 
 
-A game in the style of Dwarf Fortress, written in Python.
+A game in the style of Dwarf Fortress written in Python.
+
+Dwarf Fortress is a game with a fascinating concept. The game simulates quite a large number of different systems which all pose unique and interesting computer science challenges. 
+
+The primary goal of this project is to provide a platform upon which interested parties can experiment with algorithms for those different systems, and to see if we can improve upon the performance of the original game.
+
+The secondary goal is to perhaps someday actually have a game that somebody would want to play. Perhaps even to have an engine upon which many Dwarf Fortress style games could be easily developed by anyone.
+
+Complete documentaiton is in the docs folder.
+
+The discussion which originated this project can be seen here.
+
+http://forum.frontrowcrew.com/comments.php?DiscussionID=7200
+
+This is the URL of the canonical repository for this project.
+
+http://github.com/Apreche/Project-DORF/
