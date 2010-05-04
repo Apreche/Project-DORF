@@ -3,8 +3,9 @@ import string, random
 import pygame
 
 from grid import Grid
-from terrain import TerrainData, MeteorTerrainGenerator
 from mover import RandomMover
+from terrain import TerrainData
+from terrain.generators import MeteorTerrainGenerator, Smoother
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -17,7 +18,7 @@ ZOOM_INCREMENT = 5
 X_SCROLL = 1 
 Y_SCROLL = 1
 
-# intiialize and blank the screen
+# intialize and blank the screen
 pygame.init()
 screen = pygame.display.set_mode(SCREEN_RESOLUTION)
 pygame.display.set_caption('Project D.O.R.F.')
@@ -29,11 +30,10 @@ zoom = DEFAULT_ZOOM
 columns = SCREEN_WIDTH / zoom
 rows = SCREEN_HEIGHT / zoom
 
-
-
 # create the grid, fill it with nodes
 # this is currently a bit slow...
 gameGrid = Grid()
+
 for x in range(0, X_GRID):
     for y in range(0 ,Y_GRID):
         terrain = TerrainData()
@@ -42,7 +42,9 @@ for x in range(0, X_GRID):
 gameGrid.connect_grid()
 
 generator = MeteorTerrainGenerator()
+smoother = Smoother(0.5)
 generator.apply(gameGrid)
+smoother.apply(gameGrid)
 
 font_file = pygame.font.match_font('freemono')
 font = pygame.font.Font(font_file, FONT_SIZE)

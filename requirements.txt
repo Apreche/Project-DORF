@@ -1,0 +1,2 @@
+pygame==1.9.1release
+python-graph-core==1.7.0

@@ -1,0 +1,15 @@
+INSTALLATION
+============
+
+Project D.O.R.F. requires the following python modules.
+
+pygame 1.9.1
+python-graph-core 1.7.0
+
+It is recommended that you use distribute, virtualenv, and pip. A pip requirements.txt file has been included for your convenience.
+
+pip install -r requirements.txt
+
+To run the project use the following command.
+
+python game.py
