@@ -5,6 +5,11 @@ class TerrainGenerator:
         pass
 
 class MeteorTerrainGenerator(TerrainGenerator):
+    """
+    Modifies the heightmap by simulating some random "meteor strikes"
+
+    Author: Alex Jarocha-Ernst
+    """
     def __init__(self, strikes=25, strikeMinRadius=20, strikeMaxRadius=100):
         self.strikes = strikes
         self.strikeMinRadius = strikeMinRadius
@@ -49,6 +54,13 @@ class MeteorTerrainGenerator(TerrainGenerator):
                     terrainData.height += change
 
 class Smoother(TerrainGenerator):
+    """
+    Applies a simple smoothing filter to the height value of the grid
+    Mostly just an example of a TerrainGenerator that's meant to be run
+    in combination with others.
+
+    Author: Alex Jarocha-Ernst
+    """
     def __init__(self, smoothness=0.25):
         self.smoothness = smoothness
 
@@ -83,6 +95,8 @@ class PlasmaFractalGenerator:
     I suppose this could be expanded to generate values in three dimensions,
     which might be useful for some non-height pseudorandom data
 
+    Author: Alex Jarocha-Ernst
+
     """
     def __init__(self, scale=100, seed=0):
         self.scale = scale
@@ -106,6 +120,9 @@ class PlasmaFractalGenerator:
             Processing them in order is important; if all squares of size X 
             are not processed before squares of size X/2, pecular edge artifacts
             result.
+
+            I tried doing this recursively first, but python's stack isn't
+            large enough (and this is probably more efficient, anyway)
 
             """
             pair = pairs.pop(0)

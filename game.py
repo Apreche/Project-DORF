@@ -41,9 +41,11 @@ for x in range(0, X_GRID):
 
 #gameGrid.connect_grid()
 
+meteors = MeteorTerrainGenerator()
 generator = PlasmaFractalGenerator(250)
 smoother = Smoother(0.5)
 generator.apply(gameGrid)
+meteors.apply(gameGrid)
 #smoother.apply(gameGrid)
 
 font_file = pygame.font.match_font('freemono')
