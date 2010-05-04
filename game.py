@@ -1,34 +1,27 @@
 import sys
-import string, random
 import pygame
 
+from view_port import ViewPort
 from grid import Grid
 from mover import RandomMover
 from terrain import TerrainData
 from terrain.generators import MeteorTerrainGenerator, Smoother
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
 X_GRID = 320 
 Y_GRID = 240
+GRID_SIZE = (X_GRID, Y_GRID)
+
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
 SCREEN_RESOLUTION = (SCREEN_WIDTH, SCREEN_HEIGHT)
-DEFAULT_ZOOM = 10 # zoom by changing block size!
+
 FONT_SIZE = 14
-ZOOM_INCREMENT = 5
-X_SCROLL = 1 
-Y_SCROLL = 1
 
 # intialize and blank the screen
 pygame.init()
 screen = pygame.display.set_mode(SCREEN_RESOLUTION)
 pygame.display.set_caption('Project D.O.R.F.')
-
-viewportX = 0
-viewportY = 0
-viewportZ = 0
-zoom = DEFAULT_ZOOM
-columns = SCREEN_WIDTH / zoom
-rows = SCREEN_HEIGHT / zoom
+view = ViewPort((0, 0, 0), SCREEN_RESOLUTION, GRID_SIZE)
 
 # create the grid, fill it with nodes
 # this is currently a bit slow...
@@ -52,27 +45,21 @@ font.set_bold(True)
 
 movers = []
 
-def rectRender(obj, loc):
-    """ Renders a renderable object as a rectangle
-        at the given grid square. """
-    rectX, rectY, rectZ = loc
-    newrectX = (rectX - viewportX) * zoom
-    newrectY = (rectY - viewportY) * zoom
-    rect = pygame.Rect(newrectX, newrectY, zoom, zoom)
-    obj.render(rect, screen)
-
 # updates the screen to show the appropriate visible nodes
 def updateDisplay():
     screen.fill((0,0,0))
-    for x in range(viewportX, viewportX + columns):
-        for y in range(viewportY, viewportY + rows):
-            terrainNode = gameGrid.get_node_at((x, y, viewportZ))
+    for x in xrange(view.x, view.x + view.columns):
+        for y in xrange(view.y, view.y + view.rows):
+            loc = (x, y, view.z)
+            terrainNode = gameGrid.get_node_at(loc)
             if terrainNode is not None:
-                rectRender(terrainNode.contents, terrainNode.location)
+                screenX, screenY = view.grid2screen(loc)
+                rect = pygame.Rect(screenX, screenY,
+                        view.blockSize, view.blockSize)
+                terrainNode.contents.render(rect, screen)
 
     # show current x, y, z in top left corner
-    current_view = (viewportX, viewportY, viewportZ, zoom, columns, rows)
-    text = font.render(str(current_view), 1, (0, 255, 0))
+    text = font.render(str(view), 1, (0, 255, 0))
     rect = text.get_rect()
     rect.x, rect.y = (0,0)
     screen.blit(text, rect)
@@ -85,18 +72,14 @@ def moveMovers():
     for mover in movers:
         mover.move()
 
-def isOnScreen(loc):
-    x, y, z = loc
-    x_on = x >= viewportX and x < viewportX + columns
-    y_on = y >= viewportY and y < viewportY + rows
-    z_on = z == viewportZ
-    return x_on and y_on and z_on
-
 def displayMovers():
     for mover in movers:
         loc = mover.get_location()
-        if isOnScreen(loc):
-            rectRender(mover, loc)
+        if view.contains(loc):
+            screenX, screenY = view.grid2screen(loc)
+            rect = pygame.Rect(screenX, screenY,
+                     view.blockSize, view.blockSize)
+            mover.render(rect, screen)
 
 updateDisplay()
 
@@ -108,12 +91,9 @@ while True:
             sys.exit()
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            x, y = event.pos
-            locX = x / zoom + viewportX
-            locY = y / zoom + viewportY
-            loc = (locX, locY, viewportZ)
+            loc = view.screen2grid(event.pos)
             if event.button == 1: # Add mover
-                rm = RandomMover(gameGrid, (locX, locY, viewportZ))
+                rm = RandomMover(gameGrid, loc)
                 movers.append(rm)
             if event.button == 3: # Remove mover
                 for mover in movers:
@@ -125,29 +105,21 @@ while True:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_DOWN:
-                viewportY += Y_SCROLL
+                view.scroll((0, 1))
             if event.key == pygame.K_UP:
-                if(viewportY > 0):
-                    viewportY -= Y_SCROLL
+                view.scroll((0, -1))
             if event.key == pygame.K_LEFT:
-                if(viewportX > 0):
-                    viewportX -= X_SCROLL
+                view.scroll((-1, 0))
             if event.key == pygame.K_RIGHT:
-                viewportX += X_SCROLL
+                view.scroll((1, 0))
             if event.key == pygame.K_PAGEUP:
-                viewportZ += 1
+                view.z += 1
             if event.key == pygame.K_PAGEDOWN:
-                viewportZ -= 1
+                view.z -= 1
             if event.key == pygame.K_z:
-                if(zoom + ZOOM_INCREMENT) < 25:
-                    zoom += ZOOM_INCREMENT
-                    columns = SCREEN_WIDTH / zoom
-                    rows = SCREEN_HEIGHT / zoom
+                view.zoom_in()
             if event.key == pygame.K_x:
-                if (zoom - ZOOM_INCREMENT) > 0:
-                    zoom -= ZOOM_INCREMENT
-                    columns = SCREEN_WIDTH / zoom
-                    rows = SCREEN_HEIGHT / zoom
+                view.zoom_out()
             if event.key == pygame.K_SPACE:
                 moveMovers()
                 
