@@ -10,7 +10,7 @@ from terrain.generators import MeteorTerrainGenerator, Smoother
 
 class Game:
     def __init__(self):
-        self._running = True
+        #Our main variables used within the game
         self.resolution = self.width, self.height = 800, 600
         self.gridSize = self.xGrid, self.yGrid = 320, 240 
         self.movers = []
@@ -53,7 +53,7 @@ class Game:
         smoother.apply(self.gameGrid)
 
 
-# updates the screen to show the appropriate visible nodes
+    # updates the screen to show the appropriate visible nodes
     def updateDisplay(self):
         self.screen.fill((0,0,0))
         for x in xrange(self.view.x, self.view.x + self.view.columns):
@@ -66,31 +66,26 @@ class Game:
                             self.view.blockSize, self.view.blockSize)
                     terrainNode.contents.render(rect, self.screen)
 
-        pygame.display.update()
-
-    def debug(self):
-        # show current x, y, z in top left corner
-        text = font.render(str(view), 1, (0, 255, 0))
+        text = self.font.render(str(self.view), 1, (0, 255, 0))
         rect = text.get_rect()
         rect.x, rect.y = (0,0)
-        screen.blit(text, rect)
-
-        displayMovers()
+        self.screen.blit(text, rect)
+        self.displayMovers()
 
         pygame.display.update()
 
-    def moveMovers():
-        for mover in movers:
+    def moveMovers(self):
+        for mover in self.movers:
             mover.move()
 
-    def displayMovers():
-        for mover in movers:
+    def displayMovers(self):
+        for mover in self.movers:
             loc = mover.get_location()
-            if view.contains(loc):
-                screenX, screenY = view.grid2screen(loc)
+            if self.view.contains(loc):
+                screenX, screenY = self.view.grid2screen(loc)
                 rect = pygame.Rect(screenX, screenY,
-                         view.blockSize, view.blockSize)
-                mover.render(rect, screen)
+                         self.view.blockSize, self.view.blockSize)
+                mover.render(rect, self.screen)
 
     def execute(self):
         while True:
@@ -100,12 +95,12 @@ class Game:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     loc = self.view.screen2grid(event.pos)
                     if event.button == 1: # Add mover
-                        rm = RandomMover(gameGrid, loc)
-                        movers.append(rm)
+                        rm = RandomMover(self.gameGrid, loc)
+                        self.movers.append(rm)
                     if event.button == 3: # Remove mover
-                        for mover in movers:
+                        for mover in self.movers:
                             if mover.get_location() == loc:
-                                movers.remove(mover)
+                                self.movers.remove(mover)
                                 break
 
                     self.updateDisplay()
@@ -127,7 +122,7 @@ class Game:
                     if event.key == pygame.K_x:
                         self.view.zoom_out()
                     if event.key == pygame.K_SPACE:
-                        moveMovers()
+                        self.moveMovers()
                 
                     self.updateDisplay()
 
