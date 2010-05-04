@@ -7,120 +7,130 @@ from mover import RandomMover
 from terrain import TerrainData
 from terrain.generators import MeteorTerrainGenerator, Smoother
 
-X_GRID = 320 
-Y_GRID = 240
-GRID_SIZE = (X_GRID, Y_GRID)
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
-SCREEN_RESOLUTION = (SCREEN_WIDTH, SCREEN_HEIGHT)
+class Game:
+    def __init__(self):
+        self._running = True
+        self.resolution = self.width, self.height = 800, 600
+        self.gridSize = self.xGrid, self.yGrid = 320, 240 
+        self.movers = []
+        self._fontFile = pygame.font.match_font('freemono')
+        self._fontSize = 14
+       
+        #Our main view port/camera
+        self.view = ViewPort((0, 0, 0), self.resolution, self.gridSize)
 
-FONT_SIZE = 14
+        #Build our main grid
+        self.gameGrid = Grid()
+        self.make_grid(self.gridSize)
+        
+        #initialize and blank the screen
+        pygame.init()
+        self.screen = pygame.display.set_mode(self.resolution)
+        pygame.display.set_caption('Project D.O.R.F.')
+        pygame.key.set_repeat(800, 20) # Key repeating
+        self.font = pygame.font.Font(self._fontFile, self._fontSize)
+        self.font.set_bold(True)
 
-# intialize and blank the screen
-pygame.init()
-screen = pygame.display.set_mode(SCREEN_RESOLUTION)
-pygame.display.set_caption('Project D.O.R.F.')
-view = ViewPort((0, 0, 0), SCREEN_RESOLUTION, GRID_SIZE)
-# create the grid, fill it with nodes
-# this is currently a bit slow...
-gameGrid = Grid()
-for x in range(0, X_GRID):
-    for y in range(0 ,Y_GRID):
-        terrain = TerrainData()
-        gameGrid.add_node((x, y, 0), terrain)
+        self.generate_terrain() 
+        self.updateDisplay()
 
-#gameGrid.connect_grid()
+    def make_grid(self, gridSize):
+        for x in range(0, gridSize[0]):
+            for y in range(0 ,gridSize[1]):
+                terrain = TerrainData()
+                self.gameGrid.add_node((x, y, 0), terrain)
+        
 
-generator = MeteorTerrainGenerator()
-generator.apply(gameGrid)
-gameGrid.connect_grid()
+    def generate_terrain(self):
+        generator = MeteorTerrainGenerator()
+        generator.apply(self.gameGrid)
+        self.gameGrid.connect_grid()
 
-generator = MeteorTerrainGenerator()
-smoother = Smoother(0.5)
-generator.apply(gameGrid)
-smoother.apply(gameGrid)
+        generator = MeteorTerrainGenerator()
+        smoother = Smoother(0.5)
+        generator.apply(self.gameGrid)
+        smoother.apply(self.gameGrid)
 
-font_file = pygame.font.match_font('freemono')
-font = pygame.font.Font(font_file, FONT_SIZE)
-font.set_bold(True)
-
-movers = []
 
 # updates the screen to show the appropriate visible nodes
-def updateDisplay():
-    screen.fill((0,0,0))
-    for x in xrange(view.x, view.x + view.columns):
-        for y in xrange(view.y, view.y + view.rows):
-            loc = (x, y, view.z)
-            terrainNode = gameGrid.get_node_at(loc)
-            if terrainNode is not None:
+    def updateDisplay(self):
+        self.screen.fill((0,0,0))
+        for x in xrange(self.view.x, self.view.x + self.view.columns):
+            for y in xrange(self.view.y, self.view.y + self.view.rows):
+                loc = (x, y, self.view.z)
+                terrainNode = self.gameGrid.get_node_at(loc)
+                if terrainNode is not None:
+                    screenX, screenY = self.view.grid2screen(loc)
+                    rect = pygame.Rect(screenX, screenY,
+                            self.view.blockSize, self.view.blockSize)
+                    terrainNode.contents.render(rect, self.screen)
+
+        pygame.display.update()
+
+    def debug(self):
+        # show current x, y, z in top left corner
+        text = font.render(str(view), 1, (0, 255, 0))
+        rect = text.get_rect()
+        rect.x, rect.y = (0,0)
+        screen.blit(text, rect)
+
+        displayMovers()
+
+        pygame.display.update()
+
+    def moveMovers():
+        for mover in movers:
+            mover.move()
+
+    def displayMovers():
+        for mover in movers:
+            loc = mover.get_location()
+            if view.contains(loc):
                 screenX, screenY = view.grid2screen(loc)
                 rect = pygame.Rect(screenX, screenY,
-                        view.blockSize, view.blockSize)
-                terrainNode.contents.render(rect, screen)
+                         view.blockSize, view.blockSize)
+                mover.render(rect, screen)
 
-    # show current x, y, z in top left corner
-    text = font.render(str(view), 1, (0, 255, 0))
-    rect = text.get_rect()
-    rect.x, rect.y = (0,0)
-    screen.blit(text, rect)
+    def execute(self):
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    loc = self.view.screen2grid(event.pos)
+                    if event.button == 1: # Add mover
+                        rm = RandomMover(gameGrid, loc)
+                        movers.append(rm)
+                    if event.button == 3: # Remove mover
+                        for mover in movers:
+                            if mover.get_location() == loc:
+                                movers.remove(mover)
+                                break
 
-    displayMovers()
-
-    pygame.display.update()
-
-def moveMovers():
-    for mover in movers:
-        mover.move()
-
-def displayMovers():
-    for mover in movers:
-        loc = mover.get_location()
-        if view.contains(loc):
-            screenX, screenY = view.grid2screen(loc)
-            rect = pygame.Rect(screenX, screenY,
-                     view.blockSize, view.blockSize)
-            mover.render(rect, screen)
-
-updateDisplay()
-
-pygame.key.set_repeat(800, 20) # Key repeating
-
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            sys.exit()
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            loc = view.screen2grid(event.pos)
-            if event.button == 1: # Add mover
-                rm = RandomMover(gameGrid, loc)
-                movers.append(rm)
-            if event.button == 3: # Remove mover
-                for mover in movers:
-                    if mover.get_location() == loc:
-                        movers.remove(mover)
-                        break
-
-            updateDisplay()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_DOWN:
-                view.scroll((0, 1))
-            if event.key == pygame.K_UP:
-                view.scroll((0, -1))
-            if event.key == pygame.K_LEFT:
-                view.scroll((-1, 0))
-            if event.key == pygame.K_RIGHT:
-                view.scroll((1, 0))
-            if event.key == pygame.K_PAGEUP:
-                view.z += 1
-            if event.key == pygame.K_PAGEDOWN:
-                view.z -= 1
-            if event.key == pygame.K_z:
-                view.zoom_in()
-            if event.key == pygame.K_x:
-                view.zoom_out()
-            if event.key == pygame.K_SPACE:
-                moveMovers()
+                    self.updateDisplay()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_DOWN:
+                        self.view.scroll((0, 1))
+                    if event.key == pygame.K_UP:
+                        self.view.scroll((0, -1))
+                    if event.key == pygame.K_LEFT:
+                        self.view.scroll((-1, 0))
+                    if event.key == pygame.K_RIGHT:
+                        self.view.scroll((1, 0))
+                    if event.key == pygame.K_PAGEUP:
+                        self.view.z += 1
+                    if event.key == pygame.K_PAGEDOWN:
+                        self.view.z -= 1
+                    if event.key == pygame.K_z:
+                        self.view.zoom_in()
+                    if event.key == pygame.K_x:
+                        self.view.zoom_out()
+                    if event.key == pygame.K_SPACE:
+                        moveMovers()
                 
-            updateDisplay()
+                    self.updateDisplay()
+
+if __name__ == "__main__":
+    dorf = Game()
+    dorf.execute()
