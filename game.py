@@ -1,6 +1,7 @@
 import sys
 import pygame
 import time
+import cPickle
 
 from view_port import ViewPort
 from grid import Grid
@@ -101,6 +102,21 @@ class Game:
                          self.view.blockSize, self.view.blockSize)
                 mover.render(rect, self.screen)
 
+    def save_grid(self):
+        print "saving"
+        save = file('world.pkl', 'wb')
+        cPickle.dump(self.gameGrid, save)
+        save.close()
+        print "done saving"
+
+    def load_grid(self):
+        print "loading"
+        load = file('world.pkl', 'rb')
+        self.gameGrid = cPickle.load(load)
+        load.close()
+        self.update_terrain_surf()
+        print "done loading"
+
     def execute(self):
         self.time = time.time()
         self.frame = 0
@@ -141,6 +157,10 @@ class Game:
                         self.view.zoom_out()
                     if event.key == pygame.K_SPACE:
                         self.move_movers()
+                    if event.key == pygame.K_s:
+                        self.save_grid()
+                    if event.key == pygame.K_l:
+                        self.load_grid()
                 
             self.update_display()
 
