@@ -1,11 +1,13 @@
 import sys
 import pygame
+import time
 
 from view_port import ViewPort
 from grid import Grid
 from mover import RandomMover
 from terrain import TerrainData
-from terrain.generators import MeteorTerrainGenerator, Smoother, PlasmaFractalGenerator
+from terrain.generators import MeteorTerrainGenerator, Smoother
+from terrain.generators import PlasmaFractalGenerator
 
 
 class Game:
@@ -16,31 +18,34 @@ class Game:
         self.movers = []
         self._fontFile = pygame.font.match_font('freemono')
         self._fontSize = 14
-       
-        #Our main view port/camera
-        self.view = ViewPort((0, 0, 0), self.resolution, self.gridSize)
 
         #Build our main grid
         self.gameGrid = Grid()
         self.make_grid(self.gridSize)
-        
+       
+        #Build the terrain as a single surface
+        self.terrainSurf = pygame.Surface(self.gridSize)
+       
+        #Our main view port/camera
+        self.view = ViewPort((0, 0, 0), self.resolution, self.gridSize,
+                self.terrainSurf)
+ 
         #initialize and blank the screen
         pygame.init()
         self.screen = pygame.display.set_mode(self.resolution)
         pygame.display.set_caption('Project D.O.R.F.')
-        pygame.key.set_repeat(800, 20) # Key repeating
+        pygame.key.set_repeat(800, 1) # Key repeating
         self.font = pygame.font.Font(self._fontFile, self._fontSize)
         self.font.set_bold(True)
 
-        self.generate_terrain() 
-        self.updateDisplay()
+        self.generate_terrain()
+        self.update_terrain_surf()
 
     def make_grid(self, gridSize):
         for x in range(0, gridSize[0]):
             for y in range(0 ,gridSize[1]):
                 terrain = TerrainData()
                 self.gameGrid.add_node((x, y, 0), terrain)
-        
 
     def generate_terrain(self):
         generator = PlasmaFractalGenerator(200)
@@ -52,33 +57,42 @@ class Game:
         generator.apply(self.gameGrid)
         smoother.apply(self.gameGrid)
 
-
-    # updates the screen to show the appropriate visible nodes
-    def updateDisplay(self):
-        self.screen.fill((0,0,0))
-        for x in xrange(self.view.x, self.view.x + self.view.columns):
-            for y in xrange(self.view.y, self.view.y + self.view.rows):
+    # Updates the main game surface (SLOW!)
+    def update_terrain_surf(self):
+        for x in xrange(0, self.xGrid):
+            for y in xrange(0, self.yGrid):
                 loc = (x, y, self.view.z)
                 terrainNode = self.gameGrid.get_node_at(loc)
                 if terrainNode is not None:
-                    screenX, screenY = self.view.grid2screen(loc)
-                    rect = pygame.Rect(screenX, screenY,
-                            self.view.blockSize, self.view.blockSize)
-                    terrainNode.contents.render(rect, self.screen)
+                    rect = pygame.Rect(x, y, 1, 1)
+                    terrainNode.contents.render(rect, self.terrainSurf)
 
-        text = self.font.render(str(self.view), 1, (0, 255, 0))
+    # updates the screen to show the appropriate visible nodes
+    def update_display(self):
+
+        self.view.render_terrain(self.screen)
+
+        self.frame += 1
+
+        if time.time() - self.time > 1:
+            self.time = time.time()
+            self.fps = self.frame
+            self.frame = 0
+
+        text = self.font.render(str(self.view) +
+                " FPS:{0}".format(self.fps), 1, (0, 255, 0))
         rect = text.get_rect()
         rect.x, rect.y = (0,0)
         self.screen.blit(text, rect)
-        self.displayMovers()
+        self.display_movers()
 
         pygame.display.update()
 
-    def moveMovers(self):
+    def move_movers(self):
         for mover in self.movers:
             mover.move()
 
-    def displayMovers(self):
+    def display_movers(self):
         for mover in self.movers:
             loc = mover.get_location()
             if self.view.contains(loc):
@@ -88,6 +102,10 @@ class Game:
                 mover.render(rect, self.screen)
 
     def execute(self):
+        self.time = time.time()
+        self.frame = 0
+        self.fps = 0
+        self.update_display()
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -103,7 +121,7 @@ class Game:
                                 self.movers.remove(mover)
                                 break
 
-                    self.updateDisplay()
+                    self.update_display()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_DOWN:
                         self.view.scroll((0, 1))
@@ -122,9 +140,9 @@ class Game:
                     if event.key == pygame.K_x:
                         self.view.zoom_out()
                     if event.key == pygame.K_SPACE:
-                        self.moveMovers()
+                        self.move_movers()
                 
-                    self.updateDisplay()
+            self.update_display()
 
 if __name__ == "__main__":
     dorf = Game()
