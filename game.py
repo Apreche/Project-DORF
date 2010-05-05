@@ -5,7 +5,7 @@ from view_port import ViewPort
 from grid import Grid
 from mover import RandomMover
 from terrain import TerrainData
-from terrain.generators import MeteorTerrainGenerator, Smoother
+from terrain.generators import MeteorTerrainGenerator, Smoother, PlasmaFractalGenerator
 
 
 class Game:
@@ -43,7 +43,7 @@ class Game:
         
 
     def generate_terrain(self):
-        generator = MeteorTerrainGenerator()
+        generator = PlasmaFractalGenerator(200)
         generator.apply(self.gameGrid)
         self.gameGrid.connect_grid()
 
