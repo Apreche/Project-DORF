@@ -1,4 +1,5 @@
 import math
+import pygame
 
 # Zoom values are defined in terms of block size (pixels per grid square)
 MIN_BLOCK_SIZE = 4
@@ -12,13 +13,15 @@ Y_SCROLL = MAX_BLOCK_SIZE
 
 class ViewPort(object):
     """ A class that represents the current view of the game grid. """
-    def __init__(self, location, screenRes, gridSize):
+    def __init__(self, location, screenRes, gridSize, terrainSurf):
         self.x, self.y, self.z = location
         self.blockSize = DEFAULT_BLOCK_SIZE
-        self.screenWidth, self.screenHeight = screenRes
+        self.screenWidth, self.screenHeight = self.screenRes = screenRes
         self.gridWidth, self.gridHeight = gridSize
         self.columns = self.screenWidth / self.blockSize
         self.rows = self.screenHeight / self.blockSize
+        self.terrainSurf = terrainSurf
+        self.viewArea = pygame.Surface(self.screenRes)
 
     def zoom_in(self):
         newBlockSize = int(math.floor(self.blockSize * ZOOM_FACTOR))
@@ -78,6 +81,12 @@ class ViewPort(object):
         screenX = (gridX - self.x) * self.blockSize
         screenY = (gridY - self.y) * self.blockSize
         return screenX, screenY
+
+    def render_terrain(self, target):
+        """ Renders the viewable terrain onto the given target surface """
+        area = pygame.Rect(self.x, self.y, self.columns, self.rows)
+        viewArea = self.terrainSurf.subsurface(area)
+        pygame.transform.scale(viewArea, self.screenRes, target)
 
     def __str__(self):
         return str((self.x, self.y, self.z, self.blockSize,
