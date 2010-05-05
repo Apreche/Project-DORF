@@ -14,7 +14,7 @@ class Game:
     def __init__(self):
         #Our main variables used within the game
         self.resolution = self.width, self.height = 800, 600
-        self.gridSize = self.xGrid, self.yGrid = 320, 240 
+        self.gridSize = self.xGrid, self.yGrid = 320, 240
         self.movers = []
         self._fontFile = pygame.font.match_font('freemono')
         self._fontSize = 14
@@ -34,7 +34,7 @@ class Game:
         pygame.init()
         self.screen = pygame.display.set_mode(self.resolution)
         pygame.display.set_caption('Project D.O.R.F.')
-        pygame.key.set_repeat(800, 1) # Key repeating
+        pygame.key.set_repeat(500, 33) # Key repeating
         self.font = pygame.font.Font(self._fontFile, self._fontSize)
         self.font.set_bold(True)
 
@@ -106,10 +106,12 @@ class Game:
         self.frame = 0
         self.fps = 0
         self.update_display()
+        self.autoMovers = False
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     loc = self.view.screen2grid(event.pos)
                     if event.button == 1: # Add mover
@@ -121,7 +123,6 @@ class Game:
                                 self.movers.remove(mover)
                                 break
 
-                    self.update_display()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_DOWN:
                         self.view.scroll((0, 1))
@@ -140,8 +141,12 @@ class Game:
                     if event.key == pygame.K_x:
                         self.view.zoom_out()
                     if event.key == pygame.K_SPACE:
-                        self.move_movers()
-                
+                        if not self.autoMovers:
+                            self.move_movers()
+                    if event.key == pygame.K_t:
+                        self.autoMovers = not self.autoMovers
+
+            if self.autoMovers: self.move_movers()
             self.update_display()
 
 if __name__ == "__main__":
