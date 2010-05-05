@@ -12,11 +12,12 @@ class TerrainData():
         self.temperature = random.random()
 
     def render(self, rect, surface):
-        heightValue = ((self.height / 1000.0)+0.5) * 255
-        if heightValue > 255:
-            heightValue = 255
-        if heightValue < 0:
-            heightValue = 0
-        color = (heightValue, heightValue, heightValue)
+        if self.height > 0:
+            heightValue = ((self.height / 1000.0)) * 255
+            heightValue = min(max(heightValue, 0), 255)
+            color = (heightValue*0.5, heightValue, heightValue*0.5)
+        else:
+            heightValue = (1+(self.height / 1000.0))*255
+            color = (0, 0, heightValue)
         surface.fill(color, rect)
 
