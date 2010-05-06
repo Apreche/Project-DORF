@@ -2,20 +2,20 @@ import math
 import pygame
 
 # Zoom values are defined in terms of block size (pixels per grid square)
-MIN_BLOCK_SIZE = 4
-DEFAULT_BLOCK_SIZE = 10
-MAX_BLOCK_SIZE = 40
-ZOOM_FACTOR = 1.5 # Multiplicative zoom factor
+BLOCK_SIZES = (4, 5, 8, 10, 20, 25, 40)
+DEFAULT_INDEX = 3
 
-# Scroll values are defined in terms of number of pixels moved
-X_SCROLL = MAX_BLOCK_SIZE
-Y_SCROLL = MAX_BLOCK_SIZE
+# Scroll values are defined in terms of the number of pixels moved
+X_SCROLL = Y_SCROLL = BLOCK_SIZES[-1]
 
 class ViewPort(object):
     """ A class that represents the current view of the game grid. """
     def __init__(self, location, screenRes, gridSize, terrainSurf):
         self.x, self.y, self.z = location
-        self.blockSize = DEFAULT_BLOCK_SIZE
+
+        self.blockSizeIndex = DEFAULT_INDEX
+        self.blockSize = BLOCK_SIZES[DEFAULT_INDEX]
+
         self.screenWidth, self.screenHeight = self.screenRes = screenRes
         self.gridWidth, self.gridHeight = gridSize
         self.columns = self.screenWidth / self.blockSize
@@ -24,20 +24,20 @@ class ViewPort(object):
         self.viewArea = pygame.Surface(self.screenRes)
 
     def zoom_in(self):
-        newBlockSize = int(math.floor(self.blockSize * ZOOM_FACTOR))
-        if newBlockSize > MAX_BLOCK_SIZE: newBlockSize = MAX_BLOCK_SIZE
-        self.set_block_size(newBlockSize)
+        if self.blockSizeIndex < len(BLOCK_SIZES) - 1:
+            self.blockSizeIndex += 1
+        self.update_block_size()
 
     def zoom_out(self):
-        newBlockSize = int(math.ceil(self.blockSize / ZOOM_FACTOR))
-        if newBlockSize < MIN_BLOCK_SIZE: newBlockSize = MIN_BLOCK_SIZE
-        self.set_block_size(newBlockSize)
+        if self.blockSizeIndex > 0:
+            self.blockSizeIndex -= 1
+        self.update_block_size()
 
-    def set_block_size(self, newBlockSize):
+    def update_block_size(self):
         """ Change the block size """
         centerX = self.x + self.columns / 2
         centerY = self.y + self.rows / 2
-        self.blockSize = newBlockSize
+        self.blockSize = BLOCK_SIZES[self.blockSizeIndex]
         self.columns = self.screenWidth / self.blockSize
         self.rows = self.screenHeight / self.blockSize
         self.x = centerX - self.columns / 2
@@ -46,8 +46,8 @@ class ViewPort(object):
 
     def scroll(self, direction):
         """ Scroll in the given direction """
-        deltaX = direction[0] * X_SCROLL / self.blockSize
-        deltaY = direction[1] * Y_SCROLL / self.blockSize
+        deltaX = int(round(float(direction[0]) * X_SCROLL / self.blockSize))
+        deltaY = int(round(float(direction[1]) * Y_SCROLL / self.blockSize))
         self.x += deltaX
         self.y += deltaY
         self.bound()
