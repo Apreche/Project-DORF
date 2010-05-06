@@ -1,8 +1,21 @@
-import random, math, time
+import random
+import math
+import time
+from os import urandom
+from binascii import hexlify
 
 class TerrainGenerator:
     def apply(self, grid):
         pass
+
+    def set_seed(self, seed=None):
+        if seed is None:
+            try:
+                self.seed = long(hexlify(urandom(16)), 16)
+            except NotImplementedError:
+                self.seed = long(time.time() * 256) # use fractional seconds
+        else:
+            self.seed = seed
 
 class MeteorTerrainGenerator(TerrainGenerator):
     """
@@ -10,12 +23,18 @@ class MeteorTerrainGenerator(TerrainGenerator):
 
     Author: Alex Jarocha-Ernst
     """
-    def __init__(self, strikes=25, strikeMinRadius=20, strikeMaxRadius=100):
+    def __init__(self, strikes=25, strikeMinRadius=20, strikeMaxRadius=100,
+            seed=None):
+
+        self.set_seed(seed)
+        print "Seeding meteor @ {0}".format(self.seed)
+
         self.strikes = strikes
         self.strikeMinRadius = strikeMinRadius
         self.strikeMaxRadius = strikeMaxRadius
 
     def apply(self, grid):
+        random.seed(self.seed)
         for i in range(0, self.strikes):
             minX, minY, minZ = grid.min
             maxX, maxY, maxZ = grid.max
@@ -24,7 +43,8 @@ class MeteorTerrainGenerator(TerrainGenerator):
             strikeLocation = (randX, randY, 0)
             strikeNode = grid.get_node_at(strikeLocation)
 
-            strikeRadius = random.randint(self.strikeMinRadius, self.strikeMaxRadius)
+            strikeRadius = random.randint(self.strikeMinRadius,
+                    self.strikeMaxRadius)
             sqrStrikeRadius = strikeRadius * strikeRadius
 
             if strikeNode is None:
@@ -48,7 +68,8 @@ class MeteorTerrainGenerator(TerrainGenerator):
                 """
                 terrainData = node.contents
                 if sqrDistance < sqrStrikeRadius:
-                    change = math.pow(math.cos(sqrDistance / sqrStrikeRadius * math.pi * 3), 3)
+                    change = math.pow(math.cos(
+                        sqrDistance / sqrStrikeRadius * math.pi * 3), 3)
                     change *= (1 - (sqrDistance / sqrStrikeRadius))
                     change *= strikeRadius * 3
                     terrainData.height += change
@@ -85,9 +106,10 @@ class Smoother(TerrainGenerator):
 
             avg /= total
 
-            node.contents.height = avg*self.smoothness + node.contents.height*(1-self.smoothness)
+            node.contents.height = avg*self.smoothness + node.contents.height*(
+                    1-self.smoothness)
 
-class PlasmaFractalGenerator:
+class PlasmaFractalGenerator(TerrainGenerator):
     """
     Generates a heightmap via a plasma fractal 
     (aka 2D midpoint displacement, aka diamond-squares algorithm)
@@ -98,37 +120,35 @@ class PlasmaFractalGenerator:
     Author: Alex Jarocha-Ernst
 
     """
-    def __init__(self, scale=100, seed=0):
+    def __init__(self, scale=100, seed=None):
         self.scale = scale
-        self.seed = seed
-
-    def randomizeSeed():
-        self.seed = time.time()
+        self.set_seed(seed)
+        print "Seeding plasma fractal @ {0}".format(self.seed)
 
     def apply(self, grid):
         random.seed(self.seed)
-
         minx, miny, minz = grid.min
         maxx, maxy, maxz = grid.max
 
         pairs = []
 
-        pairs.extend(self._displacementPass(grid, (minx, miny, 0), (maxx, maxy, 0)))
+        pairs.extend(self._displacement_pass(grid, (minx, miny, 0),
+            (maxx, maxy, 0)))
         while len(pairs) > 0:
             """
             Each displacement pass adds four new (smaller) squares to process.
             Processing them in order is important; if all squares of size X 
-            are not processed before squares of size X/2, pecular edge artifacts
-            result.
+            are not processed before squares of size X/2, pecular edge
+            artifacts result.
 
             I tried doing this recursively first, but python's stack isn't
             large enough (and this is probably more efficient, anyway)
 
             """
             pair = pairs.pop(0)
-            pairs.extend(self._displacementPass(grid, pair[0], pair[1]))
+            pairs.extend(self._displacement_pass(grid, pair[0], pair[1]))
 
-    def _displacementPass(self, grid, min, max):
+    def _displacement_pass(self, grid, min, max):
         """
         Takes a square (defined by upper-left and lower-right corners) and
         displaces its center and edge midpoints.  Returns the min and max
@@ -148,11 +168,17 @@ class PlasmaFractalGenerator:
         node_lr = grid.get_node_at(max)
         node_ll = grid.get_node_at((minx, maxy, minz))
 
-        height_center = (node_ul.contents.height + node_ur.contents.height + node_lr.contents.height + node_ll.contents.height) / 4 + (random.random() - 0.5) * self.scale
-        height_left = (node_ul.contents.height + node_ll.contents.height) / 2 + (random.random() - 0.5) * self.scale
-        height_right = (node_ur.contents.height + node_lr.contents.height) / 2 + (random.random() - 0.5) * self.scale
-        height_top = (node_ul.contents.height + node_ur.contents.height) / 2 + (random.random() - 0.5) * self.scale
-        height_bottom = (node_ll.contents.height + node_lr.contents.height) / 2 + (random.random() - 0.5) * self.scale
+        height_center = (node_ul.contents.height + node_ur.contents.height +
+                node_lr.contents.height + node_ll.contents.height
+                ) / 4 + (random.random() - 0.5) * self.scale
+        height_left = (node_ul.contents.height + node_ll.contents.height
+                ) / 2 + (random.random() - 0.5) * self.scale
+        height_right = (node_ur.contents.height + node_lr.contents.height
+                ) / 2 + (random.random() - 0.5) * self.scale
+        height_top = (node_ul.contents.height + node_ur.contents.height
+                ) / 2 + (random.random() - 0.5) * self.scale
+        height_bottom = (node_ll.contents.height + node_lr.contents.height
+                ) / 2 + (random.random() - 0.5) * self.scale
 
         left = (minx, ctry, minz)
         right = (maxx, ctry, minz)
