@@ -18,6 +18,7 @@ class TerrainData():
             color = (heightValue*0.5, heightValue, heightValue*0.5)
         else:
             heightValue = (1+(self.height / 1000.0))*127
+            heightValue = min(max(heightValue, 0), 255)
             color = (heightValue*0.1, heightValue*0.1, heightValue)
         surface.fill(color, rect)
 
